@@ -1,7 +1,6 @@
 import AllAvengers.*;
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
 /*
 Добавить файл с описанием интерфейса. В котором описать два метода, void step(); и String getInfo();
@@ -19,77 +18,144 @@ import java.util.Random;
 4.Нанести ему среднее повреждение
 5.Если среди своих есть крестьянин вернуть управление
 6.уменьшить кол-во стрел на одну и вернуть управление
+
+Вызывать персонажей из обеих комманд в порядке инициативы.
+ */
+
+/*
+Делаем крестьян! В степе проверяем жив ли он и
+если жив сбрасываем флаг занятости или поле state
+ */
+
+/*
+Реализовать визуализацию своего проекта по примеру семинара
+с использованием приложенных классов. Доработать степ крестьян и магов!
+ */
+
+/*
+Делаем ход пехоты!
+1. Проверяем здоровье
+2. Ищем ближайшего врага
+3. Двигаемся в сторну врага
+4. Не наступаем на живых персонажей
+5. Если расстояние до врага одна клетка бём его!
  */
 public class Main {
+    public static ArrayList<Avengers> team1 = new ArrayList<>();
+    public static ArrayList<Avengers> team2 = new ArrayList<>();
+    public static ArrayList<Avengers> allTeam = new ArrayList<>();
+
     public static void main(String[] args) {
-        ArrayList<Avengers> list = new ArrayList<>();
-        list.add(new AntMan(Names.AntMan.getName(), 0, 1));
-        list.add(new BlackWidow(Names.BlackWidow.getName(),0, 2));
-        list.add(new CaptainAmerica(Names.CaptainAmerica.getName(), 0, 3));
-        list.add(new Hulk(Names.Hulk.getName(), 0, 4));
-        list.add(new IronMan(Names.IronMan.getName(), 0, 5));
-        list.add(new SpiderMan(Names.SpiderMan.getName(), 0, 6));
-        list.add(new Thor(Names.Thor.getName(), 0, 7));
-        list.add(new Wasp(Names.Wasp.getName(), 0, 8));
-        // list.forEach(n-> System.out.println(n.getInfo()));
 
-        System.out.println("Your Team1:");
-        int teamCount = 5;
+        int teamCount = 10;
+        boolean sortedInitiative = false;
         Random rand = new Random();
-        ArrayList<Avengers> team1 = new ArrayList<>();
+
         for (int i = 0; i < teamCount; i++) {
-            int val = rand.nextInt(teamCount);
-            switch (val) {
-                case 0:
-                    team1.add(new AntMan(Names.AntMan.getName(), 0, val + 1));
-                    break;
-                case 1:
-                    team1.add(new BlackWidow(Names.BlackWidow.getName(), 0, val + 1));
-                    break;
-                case 2:
-                    team1.add(new CaptainAmerica(Names.CaptainAmerica.getName(), 0, val + 1));
-                    break;
-                case 3:
-                    team1.add(new Hulk(Names.Hulk.getName(), 0, val + 1));
-                case 4:
-                    team1.add(new Human(Names.Human.getName(), 0, val + 1));
+            int val = rand.nextInt(7);
+            addRandomUnit(val, i, team1, 1);
+
+            val = rand.nextInt(7);
+            addRandomUnit(val, i, team2, 10);
+        }
+
+        while (!sortedInitiative) {
+            sortedInitiative = true;
+            for (int i = 0; i < team1.size() - 1; i++) {
+                if (team1.get(i).initiative < team1.get(i + 1).initiative) {
+                    Collections.swap(team1, i, i + 1);
+                    sortedInitiative = false;
+                }
             }
         }
-        ArrayList<Avengers> team2 = new ArrayList<>();
-        for (int i = 0; i < teamCount; i++) {
-            int val = rand.nextInt(5);
-            switch (val) {
-                case 0:
-                    team2.add(new IronMan(Names.IronMan.getName(), 5, val+1));
-                    break;
-                case 1:
-                    team2.add(new SpiderMan(Names.SpiderMan.getName(), 5, val+1));
-                    break;
-                case 2:
-                    team2.add(new Thor(Names.Thor.getName(), 5, val+1));
-                    break;
-                case 3:
-                    team2.add(new Wasp(Names.Wasp.getName(), 5, val+1));
-                case 4:
-                    team2.add(new Human(Names.Human.getName(), 0, val + 1));
+
+        sortedInitiative = false;
+
+        while (!sortedInitiative) {
+            sortedInitiative = true;
+            for (int i = 0; i < team2.size() - 1; i++) {
+                if (team2.get(i).initiative < team2.get(i + 1).initiative) {
+                    Collections.swap(team2, i, i + 1);
+                    sortedInitiative = false;
+                }
             }
-            // System.out.println(team2.get(i).getInfo());
         }
-        // System.out.println("The nearest: ");
+        allTeam.addAll(team1);
+        allTeam.addAll(team2);
 
-        System.out.println("Team1: ");
-        team1.forEach(n-> System.out.println(n.getInfo()));
+        View.view();
 
-        System.out.println("Team2: ");
-        team2.forEach(n-> System.out.println(n.getInfo()));
+        Scanner in = new Scanner(System.in);
+        while (true) {
+            in.nextLine();
+            String message = null;
 
-        team1.forEach(n-> n.step(team2, team1));
-        team2.forEach(n-> n.step(team1, team2));
+            int init1 = 0, init2 = 0;
+            Avengers tmpTeam1 = team1.get(init1);
+            Avengers tmpTeam2 = team2.get(init2);
 
-        System.out.println("Team1 урон: ");
-        team1.forEach(n-> System.out.println(n.getInfo()));
+            for (int i = 0; i < teamCount * 2; i++) {
+                if ((tmpTeam1.initiative >= tmpTeam2.initiative && init1 < 10) || (tmpTeam1.initiative < tmpTeam2.initiative && init2 == 10)) {
+                    tmpTeam1.step(team2, team1);
+                    init1++;
+                    if (init1 < 10) tmpTeam1 = team1.get(init1);
+                } else {
+                    tmpTeam2.step(team1, team2);
+                    init2++;
+                    if (init2 < 10) tmpTeam2 = team2.get(init2);
+                }
 
-        System.out.println("Team2 урон: ");
-        team2.forEach(n-> System.out.println(n.getInfo()));
+                if (isTeamDie(team1)) {
+                    message = "Team 2 win!";
+                    break;
+                }
+                if (isTeamDie(team2)) {
+                    message = "Team 1 win!";
+                    break;
+                }
+            }
+
+            View.view();
+
+            if (message == "Team 2 win!" || message == "Team 1 win") {
+                System.out.println(message);
+                break;
+            }
+        }
+    }
+
+    public static boolean isTeamDie(ArrayList<Avengers> team) {
+        for (Avengers avengers : team) {
+            if (avengers.state != "Dead") return false;
+        }
+        return true;
+    }
+
+    private static void addRandomUnit(int num, int i, ArrayList<Avengers> units, int teamPos) {
+        Random rand = new Random();
+        switch (num)
+        {
+            case 0:
+                units.add(new SpiderMan(teamPos, i + 1, rand.nextInt(21)));
+                break;
+            case 1:
+                units.add(new CaptainAmerica(teamPos, i + 1, rand.nextInt(21)));
+                break;
+            case 2:
+                units.add(new Thor(teamPos, i + 1, rand.nextInt(21), 1));
+                break;
+            case 3:
+                units.add(new Wasp(teamPos, i + 1, rand.nextInt(21), 1));
+                break;
+            case 4:
+                units.add(new Human(teamPos, i + 1, rand.nextInt(21), 1));
+                break;
+            case 5:
+                units.add(new Hulk(teamPos, i + 1, rand.nextInt(21)));
+                break;
+            case 6:
+                units.add(new AntMan(teamPos, i + 1, rand.nextInt(21)));
+                break;
+        }
     }
 }
